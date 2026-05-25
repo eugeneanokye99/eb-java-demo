@@ -1,0 +1,58 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25 (Corretto)
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '25'
+
+      - name: Build WAR
+        run: mvn clean package -DskipTests
+
+      - name: Generate version label
+        id: version
+        run: |
+          VERSION_LABEL="v1.0-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          echo "label=$VERSION_LABEL" >> $GITHUB_OUTPUT
+
+      - name: Upload WAR to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws s3 cp target/eb-java-demo.war s3://${{ secrets.S3_BUCKET }}/${{ steps.version.outputs.label }}.war
+
+      - name: Create Elastic Beanstalk application version
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ secrets.EB_APP_NAME }} \
+            --version-label ${{ steps.version.outputs.label }} \
+            --source-bundle S3Bucket=${{ secrets.S3_BUCKET }},S3Key=${{ steps.version.outputs.label }}.war
+
+      - name: Deploy to Elastic Beanstalk environment
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name ${{ secrets.EB_ENV_NAME }} \
+            --version-label ${{ steps.version.outputs.label }}
