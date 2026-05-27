@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: eb-backend
+
+server:
+  port: ${PORT:5000}

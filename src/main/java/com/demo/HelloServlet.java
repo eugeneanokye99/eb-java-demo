@@ -9,7 +9,7 @@ import java.io.IOException;
 @WebServlet("/")
 public class HelloServlet extends HttpServlet {
 
-    private static final String VERSION = "v1.0";
+    private static final String VERSION = "v1.1";
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
