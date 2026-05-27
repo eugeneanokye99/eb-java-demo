@@ -22,6 +22,13 @@ jobs:
       - name: Build WAR
         run: mvn clean package -DskipTests
 
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-session-name: eb-java-demo-deploy
+
       - name: Generate version label
         id: version
         run: |
@@ -29,18 +36,10 @@ jobs:
           echo "label=$VERSION_LABEL" >> $GITHUB_OUTPUT
 
       - name: Upload WAR to S3
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
         run: |
           aws s3 cp target/eb-java-demo.war s3://${{ secrets.S3_BUCKET }}/${{ steps.version.outputs.label }}.war
 
       - name: Create Elastic Beanstalk application version
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name ${{ secrets.EB_APP_NAME }} \
@@ -48,10 +47,6 @@ jobs:
             --source-bundle S3Bucket=${{ secrets.S3_BUCKET }},S3Key=${{ steps.version.outputs.label }}.war
 
       - name: Deploy to Elastic Beanstalk environment
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name ${{ secrets.EB_ENV_NAME }} \
