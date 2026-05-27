@@ -1,5 +1,9 @@
 name: Deploy to Elastic Beanstalk
 
+permissions:
+  id-token: write
+  contents: read
+
 on:
   push:
     branches:
