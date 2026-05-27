@@ -14,7 +14,7 @@ Spring Boot app for AWS Elastic Beanstalk. The app exposes a servlet at `/`.
 ./mvnw clean package
 ```
 
-The runnable jar is created at `target/eb-java-demo.jar`.
+The WAR is created at `target/eb-java-demo.war`.
 
 ## Elastic Beanstalk
 
