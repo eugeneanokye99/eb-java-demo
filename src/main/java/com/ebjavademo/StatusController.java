@@ -128,7 +128,7 @@ public class StatusController {
                     <span class="dot"></span>
                     <h1>{{APP_NAME}}</h1>
                   </div>
-                  <p class="subtitle">Spring Boot is up and running.</p>
+                  <p class="subtitle">Spring Boot is up and runningggggg.</p>
 
                   <div class="grid">
                     <div class="tile">
